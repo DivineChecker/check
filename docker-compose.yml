@@ -1,0 +1,35 @@
+services:
+  checkin-bot:
+    build: .
+    container_name: newapi-checkin-bot
+    restart: unless-stopped
+
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - OWNER_CHAT_ID=${OWNER_CHAT_ID}
+      - DB_PATH=/app/data/sites.db
+      - PORT=8080
+
+    volumes:
+      # Persistent SQLite DB — survives container restarts/updates
+      - bot_data:/app/data
+
+    ports:
+      - "8080:8080"   # health check endpoint (optional, remove if not needed)
+
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  bot_data:
+    driver: local
